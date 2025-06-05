@@ -21,7 +21,7 @@ const Header = () => {
 
         <div className="mt-4">
           <a
-            href="#"
+            href="#speciality"
             className="flex items-center gap-2 bg-white px-4 py-3 rounded-full text-gray-600 text-sm hover:scale-105 transition-all duration-300"
           >
             Book Appointment 

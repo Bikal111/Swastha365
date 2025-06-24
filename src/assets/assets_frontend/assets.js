@@ -90,7 +90,7 @@ export const doctors = [
         _id: 'doc1',
         name: 'Dr. Ramesh Adhikari',
         image: doc1,
-        speciality: 'General physician',
+        speciality: 'Gastroenterologist',
         degree: 'MBBS',
         experience: '4 Years',
         about: 'Dr. Adhikari is dedicated to providing preventive and holistic care to his patients with a focus on early diagnosis and personalized treatments.',

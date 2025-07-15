@@ -144,12 +144,12 @@ export const doctors = [
     },
     {
         _id: 'doc5',
-        name: 'Dr. Manisha Dhungana',
+        name: 'Dr. Bivasha Pokhrel',
         image: doc5,
         speciality: 'Neurologist',
         degree: 'MBBS',
         experience: '4 Years',
-        about: 'Dr. Dhungana specializes in neurological disorders and is known for her patient-centered and evidence-based care.',
+        about: 'Dr. Dhungana specializes in neurological oodisorders and is known for her patient-centered and evidence-based care.',
         fees: 1200,
         address: {
             line1: 'Basundhara',

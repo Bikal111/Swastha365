@@ -9,7 +9,7 @@ export const About = () => {
         </div>
 
         <div className='my-10 flex flex-col md:flex-row gap-10 px-6 md:px-16'>
-          <img className='w-full md:max-w-[350px] h-63' src={assets.about_image} alt="" />
+          <img className='w-full md:max-w-[350px] h-60' src={assets.about_image} alt="" />
           <div className='flex flex-col justify-center gap-6 md:w-2/4 text-sm text-gray-600'>
             <b className='text-gray-800 text-base'>Welcome to Swastha365 — Your Everyday Health Companion!</b>
             <p>At Swastha365, we’re on a mission to make healthcare smarter, faster, and friendlier. We get it — booking appointments, managing health records, and finding the right doctor can feel overwhelming. That’s where we come in!</p>

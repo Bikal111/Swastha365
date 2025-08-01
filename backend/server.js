@@ -3,7 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import connectDB from './config/mongodb.js'
 import connetCloudinary from './config/cloudinary.js'
-import adminRoute from './routes/adminroute.js'
+import adminRouter from './routes/adminroute.js'
 
 dotenv.config()
 
@@ -20,7 +20,7 @@ app.use(express.json())
 app.use(cors())
 
 //api endpoints
-app.use('/api/admin',adminRoute)
+app.use('/api/admin',adminRouter)
 
 
 app.get('/',(req,res)=>{

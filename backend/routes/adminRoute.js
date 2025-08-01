@@ -4,6 +4,6 @@ import upload from '../middleweares/multer.js'
 
 const adminRouter = express.Router()
 
-adminRouter.post('/add-docotr',upload.single('image'),addDoctor)
+adminRouter.post('/add-doctor',upload.single('image'),addDoctor)
 
 export default adminRouter

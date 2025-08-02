@@ -80,7 +80,7 @@ const loginAdmin = async (req,res) =>{
 
         if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
             
-            const token = jwt.sign(email+password,process.env.JWT_SECRET)
+            const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1d' })
             res.json({success:true,token})
 
 

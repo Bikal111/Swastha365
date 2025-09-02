@@ -1,0 +1,17 @@
+@import "tailwindcss";
+*{
+    font-family: Outfit;
+}
+.active hr{
+    @apply block;
+}
+
+::-webkit-scrollbar{
+    @apply hidden;
+}
+
+@media (max-width:750px){
+    .active p{
+        @apply text-[#ffffff] bg-[#189d01];
+    }
+}

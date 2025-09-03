@@ -1,6 +1,13 @@
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import { AppContext } from "../context/AppContext";
+import axios from 'axios'
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 export const Login = () => {
+  const  {backendUrl,token,setToken} = useContext(AppContext)
+  const navigate = useNavigate()
+
   const [state, setState] = useState("Sign Up");
 
   const [email, setEmail] = useState("");
@@ -10,7 +17,34 @@ export const Login = () => {
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
+    try {
+      if (state === 'Sign Up') {
+        const {data} = await axios.post(backendUrl +'/api/user/register',{name,password,email})
+        if (data.success) {
+          localStorage.setItem('token',data.token)
+          setToken(data.token)
+        }else{
+          toast.error(data.message)
+        }
+      }else{
+        const {data} = await axios.post(backendUrl +'/api/user/login',{password,email})
+          if (data.success) {
+            localStorage.setItem('token',data.token)
+            setToken(data.token)
+          }else{
+            toast.error(data.message)
+          }
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }
   };
+
+  useEffect (()=>{
+    if (token) {
+      navigate('/')
+    }
+  })
 
   return (
     <form
@@ -77,7 +111,7 @@ export const Login = () => {
         </div>
 
         {/* Submit button */}
-        <button className="bg-[#189d01] text-white w-full py-2 rounded-md text-base">
+        <button type="submit" className="bg-[#189d01] text-white w-full py-2 rounded-md text-base">
           {state === "Sign Up" ? "Create Account" : "Login"}
         </button>
 

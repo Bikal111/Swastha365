@@ -1,40 +1,100 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
+import { AppContext } from "../context/AppContext";
 import { assets } from "../assets/assets_frontend/assets";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export const MyProfile = () => {
-  const [userData, setUserData] = useState({
-    name: "Bikal Maharjan",
-    image: assets.profile_pic,
-    email: "bk2bikal@gmail.com",
-    phone: "+977-9843201129",
-    address: {
-      line1: "Badagaue-14",
-      line2: "Godavari,Lalitpur",
-    },
-    gender: "Male",
-    dob: "2004-05-14",
-  });
-
+  const { userData, setUserData, token, backendUrl } = useContext(AppContext);
   const [isEdit, setIsEdit] = useState(false);
+  const [image, setImage] = useState(null);
   const [focusedField, setFocusedField] = useState("");
+
+  if (!userData) return null;
+
+  const updateUserProfileData = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("name", userData.name);
+      formData.append("phone", userData.phone);
+      formData.append(
+        "address",
+        JSON.stringify({ line1: userData.address.line1, line2: userData.address.line2 })
+      );
+      formData.append("gender", userData.gender);
+      formData.append("dob", userData.dob);
+      if (image) formData.append("image", image);
+
+      const { data } = await axios.post(`${backendUrl}/api/user/update-profile`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (data.success) {
+        toast.success(data.message);
+
+        // Update frontend state immediately
+        setUserData((prev) => ({
+          ...prev,
+          name: userData.name,
+          phone: userData.phone,
+          address: { ...userData.address },
+          gender: userData.gender,
+          dob: userData.dob,
+          image: image ? URL.createObjectURL(image) : prev.image,
+        }));
+
+        setIsEdit(false);
+        setImage(null);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message);
+    }
+  };
 
   return (
     <div className="max-w-lg mx-auto flex flex-col gap-4 text-sm text-neutral-800">
-      <div className="flex items-center gap-6">
+      {/* Profile Image */}
+      {isEdit ? (
+        <label htmlFor="image" className="inline-block relative cursor-pointer">
+          <img
+            className="w-36 rounded opacity-75"
+            src={image ? URL.createObjectURL(image) : userData.image}
+            alt="Profile"
+          />
+          <img
+            className="w-10 absolute bottom-12 right-12"
+            src={image ? "" : assets.upload_icon}
+            alt=""
+          />
+          <input
+            type="file"
+            id="image"
+            hidden
+            onChange={(e) => setImage(e.target.files[0])}
+          />
+        </label>
+      ) : (
         <img className="w-36 rounded" src={userData.image} alt="Profile" />
+      )}
+
+      {/* Name */}
+      <div className="flex items-center gap-6">
         {isEdit ? (
           <input
             className={`text-3xl font-medium outline-none border rounded px-2 py-1 ${
               focusedField === "name" ? "bg-gray-100" : "bg-gray-50"
             }`}
             type="text"
-            placeholder="Enter Your Correct Full Name"
             value={userData.name}
             onFocus={() => setFocusedField("name")}
             onBlur={() => setFocusedField("")}
-            onChange={(e) =>
-              setUserData((prev) => ({ ...prev, name: e.target.value }))
-            }
+            onChange={(e) => setUserData((prev) => ({ ...prev, name: e.target.value }))}
           />
         ) : (
           <p className="font-medium text-3xl">{userData.name}</p>
@@ -49,13 +109,11 @@ export const MyProfile = () => {
           CONTACT INFORMATION
         </p>
 
-        {/* Email */}
         <div className="flex gap-2 mb-2">
           <p className="w-32 font-medium">Email Address:</p>
           <p className="text-blue-600">{userData.email}</p>
         </div>
 
-        {/* Phone */}
         <div className="flex gap-2 mb-2 items-center">
           <p className="w-32 font-medium">Phone Number:</p>
           {isEdit ? (
@@ -64,7 +122,6 @@ export const MyProfile = () => {
                 focusedField === "phone" ? "bg-gray-100" : "bg-gray-50"
               }`}
               type="text"
-              placeholder="Enter Your Phone Number"
               value={userData.phone}
               onFocus={() => setFocusedField("phone")}
               onBlur={() => setFocusedField("")}
@@ -128,7 +185,6 @@ export const MyProfile = () => {
           BASIC INFORMATION
         </p>
 
-        {/* Gender */}
         <div className="flex gap-2 mb-2 items-center">
           <p className="w-32 font-medium">Gender:</p>
           {isEdit ? (
@@ -152,7 +208,6 @@ export const MyProfile = () => {
           )}
         </div>
 
-        {/* DOB */}
         <div className="flex gap-2 items-center">
           <p className="w-32 font-medium">D.O.B:</p>
           {isEdit ? (
@@ -174,11 +229,17 @@ export const MyProfile = () => {
         </div>
       </div>
 
-      {/* Action Button */}
+      {/* Edit / Save Button */}
       <div className="mt-4">
         <button
-          className="border border-primary px-8 py-2 rounded-full hover:text-white hover:bg-primary"
-          onClick={() => setIsEdit((prev) => !prev)}
+          className="border border-primary px-8 py-2 rounded-full hover:text-white hover:bg-[#189d01]"
+          onClick={() => {
+            if (isEdit) {
+              updateUserProfileData();
+            } else {
+              setIsEdit(true);
+            }
+          }}
         >
           {isEdit ? "Save Information" : "Edit"}
         </button>

@@ -44,7 +44,7 @@ export const Login = () => {
     if (token) {
       navigate('/')
     }
-  })
+  },[token])
 
   return (
     <form

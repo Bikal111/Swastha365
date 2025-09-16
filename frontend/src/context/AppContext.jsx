@@ -9,20 +9,19 @@ const AppContextProvider = (props) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const [doctors, setDoctors] = useState([]);
-  const [token, setToken] = useState(
-    localStorage.getItem("token") ? localStorage.getItem("token") : false
-  );
+  const [token, setToken] = useState(localStorage.getItem("token") || false);
   const [userData, setUserData] = useState(null);
+  
+  // NEW: trigger for appointments update
+  const [appointmentsUpdated, setAppointmentsUpdated] = useState(false);
+  const triggerAppointmentsUpdate = () => setAppointmentsUpdated(prev => !prev);
 
-  // Fetch doctors once
+  // Fetch doctors
   const getDoctorsData = async () => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/doctor/list`);
-      if (data.success) {
-        setDoctors(data.doctors);
-      } else {
-        toast.error(data.message);
-      }
+      if (data.success) setDoctors(data.doctors);
+      else toast.error(data.message);
     } catch (error) {
       console.log(error);
       toast.error(error.message);
@@ -34,13 +33,10 @@ const AppContextProvider = (props) => {
     if (!token) return;
     try {
       const { data } = await axios.get(`${backendUrl}/api/user/get-profile`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (data.success) {
-        setUserData(data.userData);
-      } else {
+      if (data.success) setUserData(data.userData);
+      else {
         setUserData(null);
         toast.error(data.message);
       }
@@ -51,8 +47,12 @@ const AppContextProvider = (props) => {
     }
   };
 
+  useEffect(() => { getDoctorsData(); }, []);
+  useEffect(() => { if (token) loadUserProfileData(); else setUserData(null); }, [token]);
+
   const value = {
     doctors,
+    getDoctorsData,
     currencySymbol,
     token,
     setToken,
@@ -60,21 +60,9 @@ const AppContextProvider = (props) => {
     userData,
     setUserData,
     loadUserProfileData,
+    appointmentsUpdated,       // <-- new
+    triggerAppointmentsUpdate  // <-- new
   };
-
-  // Fetch doctors only once
-  useEffect(() => {
-    getDoctorsData();
-  }, []); // <-- empty dependency array
-
-  // Fetch user profile when token changes
-  useEffect(() => {
-    if (token) {
-      loadUserProfileData();
-    } else {
-      setUserData(null);
-    }
-  }, [token]);
 
   return <AppContext.Provider value={value}>{props.children}</AppContext.Provider>;
 };

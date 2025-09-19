@@ -60,8 +60,8 @@ const AppContextProvider = (props) => {
     userData,
     setUserData,
     loadUserProfileData,
-    appointmentsUpdated,       // <-- new
-    triggerAppointmentsUpdate  // <-- new
+    appointmentsUpdated,       
+    triggerAppointmentsUpdate  
   };
 
   return <AppContext.Provider value={value}>{props.children}</AppContext.Provider>;

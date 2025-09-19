@@ -61,7 +61,7 @@ const Appointment = () => {
       if (data.success) {
         toast.success(data.message);
         getDoctorsData();
-        triggerAppointmentsUpdate(); // <-- NEW: trigger MyAppointments refresh
+        triggerAppointmentsUpdate(); 
         navigate('/my-appointments');
       } else toast.error(data.message);
 

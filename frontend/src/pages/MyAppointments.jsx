@@ -26,7 +26,7 @@ const MyAppointments = () => {
           const dateA = new Date(yearA, monthA - 1, dayA, hourA, minuteA);
           const dateB = new Date(yearB, monthB - 1, dayB, hourB, minuteB);
 
-          return dateB - dateA; // newest first
+          return dateB - dateA; 
         });
         setAppointments(sortedAppointments);
       }

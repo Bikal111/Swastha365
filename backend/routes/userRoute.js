@@ -1,23 +1,21 @@
-import express from 'express'
-import { registerUser,loginUser, getProfile , updateProfile,bookAppointment,listAppointment } from '../controllers/userController.js'
-import authUser from '../middleweares/authUser.js'
-import upload from '../middleweares/multer.js'
+import express from "express";
+import {
+  registerUser,
+  loginUser,
+  getUserProfile,
+  updateUserProfile,
+  refreshAccessToken,
+} from "../controllers/userController.js";
+import protect from "../middleweares/authUser.js"; // default import
+import upload from "../middleweares/multer.js";
 
-const userRouter = express.Router()
+const router = express.Router();
 
-userRouter.post('/register',registerUser)
-userRouter.post('/login',loginUser)
-userRouter.get('/get-profile',authUser,getProfile)
-userRouter.post('/update-profile',upload.single('image'),authUser,updateProfile)
-userRouter.post('/book-appointment',authUser,bookAppointment)
-userRouter.get('/appointments',authUser,listAppointment)
+// User routes
+router.post("/register", registerUser);
+router.post("/login", loginUser);
+router.get("/profile", protect, getUserProfile);
+router.post("/update-profile", protect, upload.single("image"), updateUserProfile);
+router.post("/refresh", refreshAccessToken);
 
-
-
-
-
-
-
-
-
-export default userRouter
+export default router;

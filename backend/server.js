@@ -1,3 +1,4 @@
+// backend/server.js
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
@@ -6,29 +7,28 @@ import connetCloudinary from './config/cloudinary.js'
 import adminRouter from './routes/adminroute.js'
 import doctorRouter from './routes/doctorRoute.js'
 import userRouter from './routes/userRoute.js'
+import cookieParser from "cookie-parser";
+
 
 dotenv.config()
-
-//app config
-
 const app = express()
 const port = process.env.PORT || 4000
-connectDB()
-connetCloudinary()
 
-
-//middlewares
+// middlewares
 app.use(express.json())
 app.use(cors())
 
-//api endpoints
-app.use('/api/admin',adminRouter)
-app.use('/api/doctor',doctorRouter)
-app.use('/api/user',userRouter)
+// connect services
+connectDB()
+connetCloudinary()
+
+// api endpoints
+app.use('/api/admin', adminRouter)
+app.use('/api/doctor', doctorRouter)
+app.use('/api/user', userRouter)
+app.use(cookieParser());
 
 
-app.get('/',(req,res)=>{
-    res.send('API WORKING')
-})
+app.get('/', (req, res) => res.send('API WORKING'))
 
-app.listen(port,()=> console.log("Server Started ",port ))
+app.listen(port, () => console.log("Server Started ", port))

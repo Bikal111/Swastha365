@@ -1,186 +1,148 @@
-import validator from 'validator'
-import bcrypt from 'bcrypt'
-import userModel from '../models/userModel.js'
-import jwt from 'jsonwebtoken'
-import { v2 as cloudinary } from 'cloudinary'
-import doctorModel from '../models/docotorModel.js'
-import appointmentModel from '../models/appointmentModel.js';
+import User from "../models/userModel.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
-// API to register user
-const registerUser = async (req, res) => {
-    try {
-        const { name, email, password } = req.body
+// ================= Helper to Generate Tokens =================
+const generateTokens = (userId) => {
+  const accessToken = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+    expiresIn: "15m", // short lived
+  });
 
-        if (!name || !email || !password) {
-            return res.json({ success: false, message: "All fields are required" })
-        }
+  const refreshToken = jwt.sign({ id: userId }, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: "7d", // long lived
+  });
 
-        if (!validator.isEmail(email)) {
-            return res.json({ success: false, message: "Invalid email format" })
-        }
-
-        // Hashing user password
-        const salt = await bcrypt.genSalt(10)
-        const hashedPassword = await bcrypt.hash(password, salt)
-
-        const userData = {
-            name,
-            email,
-            password: hashedPassword
-        }
-
-        const newUser = new userModel(userData)
-        const user = await newUser.save()
-
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" })
-
-        res.json({ success: true, message: "User registered successfully", token })
-    } catch (error) {
-        console.log(error)
-        res.json({ success: false, message: error.message })
-    }
-}
-
-// API for User LOGIN
-const loginUser = async (req, res) => {
-    try {
-        const { email, password } = req.body
-
-        if (!email || !password) {
-            return res.json({ success: false, message: "Email and password are required" })
-        }
-
-        const user = await userModel.findOne({ email })
-        if (!user) {
-            return res.json({ success: false, message: "User does not exist" })
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password)
-
-        if (isMatch) {
-            const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" })
-            res.json({ success: true, message: "Login successful", token })
-        } else {
-            res.json({ success: false, message: "Invalid Credentials" })
-        }
-    } catch (error) {
-        console.log(error)
-        res.json({ success: false, message: error.message })
-    }
-}
-
-// API for USER PROFILE data
-const getProfile = async (req, res) => {
-    try {
-        const userId = req.user.userId; // ✅ from authUser middleware
-        const userData = await userModel.findById(userId).select("-password");
-
-        if (!userData) {
-            return res.json({ success: false, message: "User not found" });
-        }
-
-        res.json({ success: true, userData });
-    } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
-    }
+  return { accessToken, refreshToken };
 };
 
-// API To Update user profile
-const updateProfile = async (req, res) => {
-    try {
-        const userId = req.user.userId; // ✅ from authUser middleware
-        const { name, phone, address, dob, gender } = req.body;
-        const imageFile = req.file;
-
-        if (!name || !phone || !address || !dob || !gender) {
-            return res.json({ success: false, message: "Data Missing" });
-        }
-
-        // prepare update object
-        const updateData = { name, phone, address, dob, gender };
-
-        if (imageFile) {
-            // upload image to cloudinary
-            const imageUpload = await cloudinary.uploader.upload(imageFile.path, { resource_type: 'image' });
-            updateData.image = imageUpload.secure_url;
-        }
-
-        await userModel.findByIdAndUpdate(userId, updateData);
-
-        res.json({ success: true, message: "Profile Updated" });
-    } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
-    }
-};
-
-// API to book appointment
-
-const bookAppointment = async(req,res)=>{
-    try {
-        const { docId, slotDate, slotTime } = req.body;
-        const userId = req.user.userId; // ✅ from middleware
-
-        const docData = await doctorModel.findById(docId).select('-password');
-        if(!docData.available){
-            return res.json({success:false,message:'Doctor not available'});
-        }
-
-        let slots_booked = docData.slots_booked || {};
-
-        // Check if slot is available
-        if (slots_booked[slotDate]) {
-            if (slots_booked[slotDate].includes(slotTime)) {
-                return res.json({success:false,message:'Slot not available'});
-            } else {
-                slots_booked[slotDate].push(slotTime);
-            }
-        } else {
-            slots_booked[slotDate] = [slotTime];
-        }
-
-        const userData = await userModel.findById(userId).select('-password');
-
-        delete docData.slots_booked;
-
-        const appointmentData = {
-            userId,
-            docId,
-            userData,
-            docData,
-            amount: docData.fees,
-            slotTime,
-            slotDate,
-            date: Date.now()
-        };
-
-        const newAppointment = new appointmentModel(appointmentData);
-        await newAppointment.save();
-
-        // Save updated slot data
-        await doctorModel.findByIdAndUpdate(docId,{slots_booked});
-
-        res.json({success:true,message:'Appointment Booked'});
-    } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
-    }
-};
-
-//API to get user appointment  for my-appointment page
-
-
-const listAppointment =  async (req, res) => {
+// ================= Register =================
+export const registerUser = async (req, res) => {
   try {
-    const userId = req.user.userId; 
+    const { name, email, password } = req.body;
 
-    const appointments = await appointmentModel.find({ userId }).sort({ date: -1 }); 
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ success: false, message: "User already exists" });
+    }
 
-    res.json({ success: true, appointments });
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+    });
+
+    const { accessToken, refreshToken } = generateTokens(user._id);
+
+    // Save refresh token in HttpOnly cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      token: accessToken,
+      user,
+    });
   } catch (error) {
     console.log(error);
-    res.json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 };
-export { registerUser, loginUser, getProfile, updateProfile, bookAppointment,listAppointment }
+
+// ================= Login =================
+export const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ success: false, message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: "Invalid credentials" });
+    }
+
+    const { accessToken, refreshToken } = generateTokens(user._id);
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({
+      success: true,
+      message: "Login successful",
+      token: accessToken,
+      user,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// ================= Profile =================
+export const getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    res.json({ success: true, user });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// ================= Update Profile =================
+export const updateUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (user) {
+      user.name = req.body.name || user.name;
+      user.phone = req.body.phone || user.phone;
+      user.gender = req.body.gender || user.gender;
+      user.dob = req.body.dob || user.dob;
+      user.address = req.body.address ? JSON.parse(req.body.address) : user.address;
+
+      if (req.file) {
+        user.image = req.file.filename;
+      }
+
+      const updatedUser = await user.save();
+
+      res.json({ success: true, message: "Profile updated", user: updatedUser });
+    } else {
+      res.status(404).json({ success: false, message: "User not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// ================= Refresh Token =================
+export const refreshAccessToken = (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) return res.status(401).json({ success: false, message: "No refresh token" });
+
+  jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
+    if (err) return res.status(403).json({ success: false, message: "Invalid refresh token" });
+
+    const accessToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, {
+      expiresIn: "15m",
+    });
+
+    res.json({ success: true, token: accessToken });
+  });
+};

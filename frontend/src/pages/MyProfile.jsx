@@ -19,18 +19,25 @@ export const MyProfile = () => {
       formData.append("phone", userData.phone);
       formData.append(
         "address",
-        JSON.stringify({ line1: userData.address.line1, line2: userData.address.line2 })
+        JSON.stringify({
+          line1: userData.address.line1,
+          line2: userData.address.line2,
+        })
       );
       formData.append("gender", userData.gender);
       formData.append("dob", userData.dob);
       if (image) formData.append("image", image);
 
-      const { data } = await axios.post(`${backendUrl}/api/user/update-profile`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const { data } = await axios.post(
+        `${backendUrl}/api/user/update-profile`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            // axios will set Content-Type automatically for FormData
+          },
+        }
+      );
 
       if (data.success) {
         toast.success(data.message);
@@ -53,7 +60,7 @@ export const MyProfile = () => {
       }
     } catch (error) {
       console.log(error);
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || error.message);
     }
   };
 
@@ -94,7 +101,9 @@ export const MyProfile = () => {
             value={userData.name}
             onFocus={() => setFocusedField("name")}
             onBlur={() => setFocusedField("")}
-            onChange={(e) => setUserData((prev) => ({ ...prev, name: e.target.value }))}
+            onChange={(e) =>
+              setUserData((prev) => ({ ...prev, name: e.target.value }))
+            }
           />
         ) : (
           <p className="font-medium text-3xl">{userData.name}</p>

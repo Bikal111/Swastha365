@@ -1,31 +1,25 @@
+// backend/middleweares/authUser.js
 import jwt from "jsonwebtoken";
 
-// User authentication middleware
 const authUser = async (req, res, next) => {
   try {
-    let token = req.headers.authorization;
-
-    if (!token) {
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
         message: "Not Authorized. Login again.",
       });
     }
 
-    // Remove "Bearer " if present
-    if (token.startsWith("Bearer ")) {
-      token = token.split(" ")[1];
-    }
-
-    // Verify JWT
+    const token = authHeader.split(" ")[1]; // remove "Bearer "
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Attach user info to request
+    // Attach user info to request object
     req.user = { userId: decoded.userId };
 
     next();
   } catch (error) {
-    console.error("Auth Error:", error.message);
+    console.error("Auth Error:", error?.message || error);
     res.status(401).json({
       success: false,
       message: "Unauthorized or Invalid Token",
@@ -33,4 +27,5 @@ const authUser = async (req, res, next) => {
   }
 };
 
+// Default export
 export default authUser;

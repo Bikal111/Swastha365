@@ -1,29 +1,35 @@
-import jwt from 'jsonwebtoken'
+// backend/middleweares/authAdmin.js
+import jwt from 'jsonwebtoken';
 
-//admin authentication middlewear
+// Admin authentication middleware
+export const protect = async (req, res, next) => {
+  try {
+    // Get the admin token from headers
+    const atoken = req.headers.atoken;
 
-const authAdmin = async (req, res, next) => {
-    try {
-        const atoken = req.headers.atoken;
-
-        if (!atoken) {
-            return res.json({ success: false, message: 'Not Authorized. Login again.' });
-        }
-
-        const decoded = jwt.verify(atoken, process.env.JWT_SECRET);
-
-        
-        if (decoded.email !== process.env.ADMIN_EMAIL) {
-            return res.json({ success: false, message: 'Not Authorized. Invalid Token.' });
-        }
-
- 
-        next();
-
-    } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
+    if (!atoken) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Not Authorized. Login again.' 
+      });
     }
-};
 
-export default authAdmin;
+    // Verify the token
+    const decoded = jwt.verify(atoken, process.env.JWT_SECRET);
+
+    // Check if the token belongs to the admin
+    if (decoded.email !== process.env.ADMIN_EMAIL) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Not Authorized. Invalid Token.' 
+      });
+    }
+
+    // If everything is fine, proceed to next middleware/controller
+    next();
+
+  } catch (error) {
+    console.error('Admin auth error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

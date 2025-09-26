@@ -6,12 +6,11 @@ import {
   updateUserProfile,
   refreshAccessToken,
 } from "../controllers/userController.js";
-import protect from "../middleweares/authUser.js"; // default import
+import { protect } from "../middleweares/authAdmin.js";
 import upload from "../middleweares/multer.js";
 
 const router = express.Router();
 
-// User routes
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/profile", protect, getUserProfile);

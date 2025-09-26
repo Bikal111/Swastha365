@@ -13,8 +13,6 @@ const authUser = async (req, res, next) => {
 
     const token = authHeader.split(" ")[1]; // remove "Bearer "
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Attach user info to request object
     req.user = { userId: decoded.userId };
 
     next();
@@ -27,5 +25,4 @@ const authUser = async (req, res, next) => {
   }
 };
 
-// Default export
 export default authUser;

@@ -183,4 +183,41 @@ const listAppointment =  async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
-export { registerUser, loginUser, getProfile, updateProfile, bookAppointment,listAppointment }
+
+// API to cancel appointment
+const cancelAppointment = async (req, res) => {
+    try {
+        const userId = req.user.userId; // ✅ Get user ID from token
+        const { appointmentId } = req.body;
+
+        const appointmentData = await appointmentModel.findById(appointmentId);
+        if (!appointmentData) {
+            return res.json({ success: false, message: "Appointment not found" });
+        }
+
+        // ✅ Compare properly using String()
+        if (String(appointmentData.userId) !== String(userId)) {
+            return res.json({ success: false, message: "Unauthorized action" });
+        }
+
+        // Mark appointment as cancelled
+        await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true });
+
+        // Release doctor's slot
+        const { docId, slotDate, slotTime } = appointmentData;
+        const doctorData = await doctorModel.findById(docId);
+        let slots_booked = doctorData.slots_booked;
+
+        if (slots_booked[slotDate]) {
+            slots_booked[slotDate] = slots_booked[slotDate].filter(e => e !== slotTime);
+        }
+
+        await doctorModel.findByIdAndUpdate(docId, { slots_booked });
+
+        return res.json({ success: true, message: "Appointment Cancelled" });
+    } catch (error) {
+        console.log(error);
+        return res.json({ success: false, message: error.message });
+    }
+};
+export { registerUser, loginUser, getProfile, updateProfile, bookAppointment,listAppointment,cancelAppointment }

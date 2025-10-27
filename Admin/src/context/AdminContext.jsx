@@ -68,22 +68,30 @@ const AdminContextProvider = (props) => {
 
   // ✅ Cancel appointment
   const cancelAppointment = async (appointmentId) => {
-    try {
-      const { data } = await axios.post(
-        backendUrl + "/api/admin/cancel-appointment",
-        { appointmentId },
-        { headers: { aToken } }
+  try {
+    const { data } = await axios.post(
+      backendUrl + '/api/admin/cancel-appointment',
+      { appointmentId },
+      { headers: { aToken } }
+    );
+
+    if (data.success) {
+      toast.success(data.message);
+
+      // ✅ Update local state
+      setAppointments((prev) =>
+        prev.map((appt) =>
+          appt._id === appointmentId ? { ...appt, cancelled: true } : appt
+        )
       );
-      if (data.success) {
-        toast.success(data.message);
-        getAllAppointments(); // refresh appointments
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      toast.error(error.message);
+
+    } else {
+      toast.error(data.message);
     }
-  };
+  } catch (error) {
+    toast.error(error.message);
+  }
+};
 
   const value = {
     aToken,

@@ -7,7 +7,7 @@ import { assets } from '../../assets/assets'
 
 const DoctorAppointment = () => {
 
-  const {dToken,appointments,getAppointments} = useContext(DoctorContext)
+  const {dToken,appointments,getAppointments, completeAppointment,cancelAppointment} = useContext(DoctorContext)
 
   const {calculateAge,slotDateFormat,currency} = useContext(AppContext)
 
@@ -48,13 +48,28 @@ const DoctorAppointment = () => {
               <p className='max-sm:hidden' >{calculateAge(item.userData.dob)}</p>
               <p>{slotDateFormat(item.slotDateFormat)},{item.slotTime}</p>
               <p>{currency}{item.amount}</p>
+               {item.cancelled ? (
+              <p className='text-red-500 font-medium text-xs'>Cancelled</p>
+            ) : item.isCompleted ? (
+              <p className='text-green-600 font-medium text-xs'>Completed</p>
+            ) : (
               <div className='flex'>
-                <img className='w-10 cursor-pointer' src={assets.cancel_icon} alt="" />
-                <img className='w-10 cursor-pointer' src={assets.tick_icon} alt="" />
+                <img
+                  onClick={() => cancelAppointment(item._id)}
+                  className='w-10 cursor-pointer'
+                  src={assets.cancel_icon}
+                  alt='Cancel'
+                />
+                <img
+                  onClick={() => completeAppointment(item._id)}
+                  className='w-10 cursor-pointer'
+                  src={assets.tick_icon}
+                  alt='Complete'
+                />
               </div>
-            </div>
-          ))
-        }
+            )}
+          </div>
+        ))}
       </div>
     </div>
   )

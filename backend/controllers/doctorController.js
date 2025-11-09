@@ -69,4 +69,64 @@ const appointmentsDoctor = async (req,res) =>{
     }
 }
 
-export {changeAvailablity,doctorList,loginDoctor,appointmentsDoctor}
+
+//API to mark appointment complete
+const appointmentComplete = async (req, res) => {
+  try {
+    const { appointmentId } = req.body;
+    const docId = req.doctor.docId;
+
+    if (!appointmentId || !docId) {
+      return res.json({ success: false, message: "Missing data" });
+    }
+
+    const appointmentData = await appointmentModel.findById(appointmentId);
+
+    if (!appointmentData) {
+      return res.json({ success: false, message: "Appointment not found" });
+    }
+
+    // ✅ Safely compare only if docId exists in appointment
+    if (appointmentData.docId && appointmentData.docId.toString() === docId.toString()) {
+      await appointmentModel.findByIdAndUpdate(appointmentId, { isCompleted: true });
+      return res.json({ success: true, message: "Appointment completed" });
+    } else {
+      return res.json({ success: false, message: "Mark failed: doctor mismatch" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+//API to mark appointment canceled
+const appointmentCancel = async (req, res) => {
+  try {
+    const { appointmentId } = req.body;
+    const docId = req.doctor.docId;
+
+    if (!appointmentId || !docId) {
+      return res.json({ success: false, message: "Missing data" });
+    }
+
+    const appointmentData = await appointmentModel.findById(appointmentId);
+
+    if (!appointmentData) {
+      return res.json({ success: false, message: "Appointment not found" });
+    }
+
+    // ✅ Safe check to avoid undefined.toString()
+    if (appointmentData.docId && appointmentData.docId.toString() === docId.toString()) {
+      await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true });
+      return res.json({ success: true, message: "Appointment cancelled" });
+    } else {
+      return res.json({ success: false, message: "Cancellation failed: doctor mismatch" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+
+export {changeAvailablity,doctorList,loginDoctor,appointmentsDoctor,appointmentCancel,appointmentComplete}

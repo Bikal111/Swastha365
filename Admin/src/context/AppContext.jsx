@@ -31,9 +31,19 @@ const AppContextProvider = (props) =>{
 
   // Format the slot date properly
   const slotDateFormat = (slotDate) => {
-    const dateArray = slotDate.split("_");
-    return `${dateArray[0]} ${months[Number(dateArray[1])]} ${dateArray[2]}`;
-  };
+  if (!slotDate || typeof slotDate !== "string") {
+    return "N/A"; // or return an empty string if you prefer
+  }
+
+  const dateArray = slotDate.split("_");
+
+  // Ensure we have at least three parts before formatting
+  if (dateArray.length < 3) {
+    return slotDate; // fallback to raw value
+  }
+
+  return `${dateArray[0]} ${months[Number(dateArray[1])]} ${dateArray[2]}`;
+};
 
     const value ={
         calculateAge,

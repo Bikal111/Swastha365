@@ -12,6 +12,8 @@ const DoctorContextProvider = (props) => {
  
   const [dashData,setDashData] = useState(false)
 
+  const [profileData,setProfileData] = useState(false)
+
   const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
   // ✅ Logout helper
@@ -108,6 +110,24 @@ const DoctorContextProvider = (props) => {
     }
   }
 
+  const getProfileData = async ()=>{
+    try {
+
+      const {data} = await axios.get(backendUrl+'/api/doctor/profile',{
+      headers: { Authorization: `Bearer ${dToken}` }})
+
+      if (data.success) {
+        setProfileData(data.profileData)
+        console.log(data.profileData);
+        
+      }
+      
+    } catch (error) {
+       console.log(error);
+      toast.error(error.message)
+    }
+  }
+
   // ✅ Context value
   const value = {
     dToken,
@@ -116,7 +136,8 @@ const DoctorContextProvider = (props) => {
     getAppointments,
     completeAppointment,
     cancelAppointment,
-    dashData,setDashData,getDashData
+    dashData,setDashData,getDashData,
+    profileData,setProfileData,getProfileData,
   };
 
   return (

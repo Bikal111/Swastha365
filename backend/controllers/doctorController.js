@@ -189,17 +189,29 @@ const doctorProfile = async (req, res) => {
 
 const updateDoctorProfile = async (req, res) => {
   try {
+    // get docId from auth middleware (recommended)
+    const docId = req?.doctor?.docId || req?.doctor?.id || req.body?.docId
 
-    const { docId, fees, address, available } = req.body
+    if (!docId) {
+      return res.json({ success: false, message: 'No doctor id found in request (auth failure?)' })
+    }
 
-    await doctorModel.findByIdAndUpdate(docId, { fees, address, available })
+    const { image, name, degree, speciality, fees, address, available } = req.body
+
+    await doctorModel.findByIdAndUpdate(docId, {
+      image,
+      name,
+      degree,
+      speciality,
+      fees,
+      address,
+      available
+    }, { new: true })
 
     res.json({ success: true, message: 'Profile Updated' })
-
-
   } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: error.message });
+    console.log(error)
+    res.json({ success: false, message: error.message })
   }
 }
 

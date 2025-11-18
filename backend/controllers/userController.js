@@ -7,6 +7,8 @@ import doctorModel from "../models/docotorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
 import Stripe from "stripe";
 import dotenv from "dotenv";
+import sendEmail from "../utils/sendEmail.js";
+
 
 // ✅ Load environment variables before Stripe initialization
 dotenv.config();
@@ -100,8 +102,8 @@ const bookAppointment = async (req, res) => {
   try {
     const { docId, slotDate, slotTime } = req.body;
     const userId = req.user.userId;
-    const docData = await doctorModel.findById(docId).select("-password");
 
+    const docData = await doctorModel.findById(docId).select("-password");
     if (!docData.available)
       return res.json({ success: false, message: "Doctor not available" });
 
@@ -110,7 +112,9 @@ const bookAppointment = async (req, res) => {
       return res.json({ success: false, message: "Slot already booked" });
 
     slots_booked[slotDate] = [...(slots_booked[slotDate] || []), slotTime];
+
     const userData = await userModel.findById(userId).select("-password");
+
     delete docData.slots_booked;
 
     const appointmentData = {
@@ -126,7 +130,30 @@ const bookAppointment = async (req, res) => {
 
     const newAppointment = new appointmentModel(appointmentData);
     await newAppointment.save();
+
     await doctorModel.findByIdAndUpdate(docId, { slots_booked });
+
+    // ✅ EMAIL: Appointment Confirmation
+    const emailHTML = `
+      <h2>Appointment Confirmation</h2>
+      <p>Hi <strong>${userData.name}</strong>,</p>
+      <p>Your appointment has been booked successfully.</p>
+
+      <h3>Appointment Details:</h3>
+      <p><strong>Doctor:</strong> ${docData.name}</p>
+      <p><strong>Specialization:</strong> ${docData.speciality}</p>
+      <p><strong>Date:</strong> ${slotDate}</p>
+      <p><strong>Time:</strong> ${slotTime}</p>
+      <p><strong>Fees:</strong> NPR ${docData.fees}</p>
+
+      <p>Thank you for using our service.</p>
+    `;
+
+    await sendEmail(
+      userData.email,
+      "Appointment Booked Successfully",
+      emailHTML
+    );
 
     res.json({
       success: true,
@@ -134,9 +161,11 @@ const bookAppointment = async (req, res) => {
       appointmentId: newAppointment._id,
     });
   } catch (error) {
+    console.log("Appointment Error:", error);
     res.json({ success: false, message: error.message });
   }
 };
+
 
 // ✅ Get Appointments
 const listAppointment = async (req, res) => {

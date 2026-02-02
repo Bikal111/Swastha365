@@ -7,30 +7,27 @@ import adminRouter from './routes/adminroute.js'
 import doctorRouter from './routes/doctorRoute.js'
 import userRouter from './routes/userRoute.js'
 
-
 dotenv.config()
-
-//app config
 
 const app = express()
 const port = process.env.PORT || 4000
 connectDB()
 connetCloudinary()
 
-
-//middlewares
 app.use(express.json())
 app.use(cors())
 
-//api endpoints
-app.use('/api/admin',adminRouter)
-app.use('/api/doctor',doctorRouter)
-app.use('/api/user',userRouter)
+app.use('/api/admin', adminRouter)
+app.use('/api/doctor', doctorRouter)
+app.use('/api/user', userRouter)
 
-
-
-app.get('/',(req,res)=>{
+app.get('/', (req, res) => {
     res.send('API WORKING')
 })
 
-app.listen(port,()=> console.log("Server Started ",port ))
+// Only listen if not running on Vercel
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(port, () => console.log("Server Started ", port))
+}
+
+export default app; // This is the crucial part for Vercel
